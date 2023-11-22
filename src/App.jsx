@@ -51,7 +51,6 @@ function App() {
 			e.target.style.boxShadow = '0 4px 3px gray'
 		}
 	}
-
 	function dragLeaveHandler(e) {
 		e.target.style.boxShadow = 'none'
 	}
@@ -69,7 +68,7 @@ function App() {
 		const currentIndex = currentBoard.items.indexOf(currentItem)
 		// удаляем этот элемент из текущей доски, первый параметр индекс элемента с которого будем производить удаление, а вторым кол-во удаленных элементов
 		currentBoard.items.splice(currentIndex, 1)
-		// по аналогии получаем индекс эдемента НАД которым мы держим карточку
+		// по аналогии получаем индекс элемента НАД которым мы держим карточку, т. е. после которой мы хотим разместить новый элемент
 		const dropIndex = board.items.indexOf(item)
 		// у доски над которой мы держим задачу  вызываем ф-цию сплайс но с др. параметрами. Индекс увеличиваем на единицу, так как мы будем вставлять после этой задачи, количество удаленных элементов ноль, последним параметром передаем задачу, которую мы хотим вставить
 		board.items.splice(dropIndex + 1, 0, currentItem)
@@ -91,50 +90,69 @@ function App() {
 	}
 
 	function dropCardHandler(e, board) {
-		board.items.push(currentItem)
-		const currentIndex = currentBoard.items.indexOf(currentItem)
-		// удаляем этот элемент из текущей доски, первый параметр индекс элемента с которого будем производить удаление, а вторым кол-во удаленных элементов
-		currentBoard.items.splice(currentIndex, 1)
-		//доски мы изменили, далее делаем рендеринг изменив состояние, меняем старые доски на уже измененные
-		setBoards(
-			boards.map(b => {
-				// проверяем, если текущий элемент итерации равен одному из досок, которую мы изменяли, то возвращаем измененную доску, в ином случае просто возвращаем элемент итерации
-				if (b.id === board.id) {
-					return board
-				}
+		// исключаем перенос одновременно двух задач
+		const currentId = board.items.map(item => item.id)
+		if (!currentId.includes(currentItem.id)) {
+			// добавляем задачу в новую доску(вконец)
+			board.items.push(currentItem)
+			const currentIndex = currentBoard.items.indexOf(currentItem)
+			// удаляем этот элемент из текущей доски, первый параметр индекс элемента с которого будем производить удаление, а вторым кол-во удаленных элементов
+			currentBoard.items.splice(currentIndex, 1)
+			//доски мы изменили, далее делаем рендеринг изменив состояние, меняем старые доски на уже измененные
+			setBoards(
+				boards.map(b => {
+					// проверяем, если текущий элемент итерации равен одному из досок, которую мы изменяли, то возвращаем измененную доску, в ином случае просто возвращаем элемент итерации
+					if (b.id === board.id) {
+						return board
+					}
 
-				if (b.id === currentBoard.id) {
-					return currentBoard
-				}
-				return b
-			})
-		)
-		e.target.style.boxShadow = 'none'
+					if (b.id === currentBoard.id) {
+						return currentBoard
+					}
+					return b
+				})
+			)
+			e.target.style.boxShadow = 'none'
+		}
+	}
+
+	function addNewItem(params) {
+		console.log('Добавить задачу')
 	}
 
 	return (
 		<div className='app'>
 			{boards.map(board => (
 				<div
+					key={board.id}
 					className='board'
+					// чтобы можно было закидывать задачи в пустую карточку
 					onDragOver={e => dragOverHandler(e)}
 					onDrop={e => dropCardHandler(e, board)}
 				>
 					<div className='board__title'>{board.title}</div>
 					{board.items.map(item => (
 						<div
+							key={board.items.id}
+							// находимся над каким-то другим объектом
 							onDragOver={e => dragOverHandler(e)}
+							// вышли за пределы другой карточки
 							onDragLeave={e => dragLeaveHandler(e)}
 							onDragStart={e => dragStartHandler(e, board, item)}
+							// отпустили перемещение
 							onDragEnd={e => dragEndHandler(e)}
+							// отпустили карточку => происходит действие
 							onDrop={e => dropHandler(e, board, item)}
 							// className='todo'
-							draggable={'true'}
+							draggable={true}
 							className='item'
 						>
 							{item.title}
 						</div>
 					))}
+					<button className='board__btn' onClick={addNewItem}>
+						Добавить задачу
+					</button>
 				</div>
 			))}
 		</div>
